@@ -1,0 +1,7 @@
+# Dependencies for CalDAVPlugin
+# Example:
+# Time::ParseDate,>=2003.0211,cpan,Required.
+# Foswiki::Plugins,>=1.2,perl,Requires version 1.2 of handler API.
+Cal::DAV,>=0,cpan,Required
+DateTime::Format::ICal,>=0,cpan,Required
+CalendarPlugin,>=2.000,perl,Optional, required to display calendars

@@ -1,0 +1,6 @@
+# Release manifest for CalDAVPlugin
+data/System/CalDAVPlugin.txt 0644 Documentation
+lib/Foswiki/Plugins/CalDAVPlugin.pm 0644 Perl module
+lib/Foswiki/Plugins/CalDAVPlugin/Core.pm 0644 Perl module
+lib/Foswiki/Plugins/CalDAVPlugin/Config.spec 0644 Perl module
+lib/Foswiki/Configure/Checkers/Plugins/CalDAVPlugin/Calendars.pm 0644
