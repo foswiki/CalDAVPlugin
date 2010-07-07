@@ -1,43 +1,41 @@
 # See bottom of file for license and copyright information
 package Foswiki::Plugins::CalDAVPlugin::Core;
 
+use strict;
+use warnings;
+
 use Cal::DAV;
 use Foswiki::Time();
 use DateTime::Format::ICal;
 
-# Target formats
-# dd MMM yyyy - description
-#   * 09 Dec 2002 - Expo
-# dd MMM yyyy - dd MMM yyyy - description
-#   * 02 Feb 2002 - 04 Feb 2002 - Vacation
-# dd MMM - description
-#   * 05 Jun - Every 5th of June
-# w DDD MMM - description
-#   * 2 Tue Mar - Every 2nd Tuesday of March
-# rrule: FREQ=MONTHLY
-# L DDD MMM - description
-#   * L Mon May - The last Monday of May
-# rrule: FREQ=MONTHLY
-# A dd MMM yyyy - description
-#   * A 20 Jul 1969 - First moon landing
-# FREQ=YEARLY
-# w DDD - description
-#   * 1 Fri - Every 1st Friday of the month
-# FREQ=MONTHLY,BYDAY=FR
-# L DDD - description
-#   * L Mon - The last Monday of each month
-# dd - description 	
-#   * 14 - The 14th of every month
-# E DDD - description
-#   * E Wed - Every Wednesday
-# E DDD dd MMM yyyy - description
-#   * E Wed 27 Jan 2005 - Every Wednesday Starting 27 Jan 2005
-# E DDD dd MMM yyyy - dd MMM yyyy - description
-#   * E Wed 1 Jan 2005 - 27 Jan 2005 - Every Wednesday from 1 Jan 2005 through 27 Jan 2005 (inclusive)
-# En dd MMM yyyy - description
-#   * E3 02 Dec 2002 - Every three days starting 02 Dec 2002
-# En dd MMM yyyy - dd MMM yyyy - description
-#   * E3 12 Apr 2005 - 31 Dec 2005 - Every three days from 12 Apr 2005 through 31 Dec 2005 (inclusive) 
+my %formats = (
+    calendar => {
+        event => '   * $day $month $year - $summary',
+        range => '   * $day $month $year - $eday $emonth $eyear - $summary',
+    },
+    holidaylist => {
+        event => '   * $day $month $year - $name - $summary - $icon',
+        range => '   * $day $month $year - $eday $emonth $eyear - $name - $summary',
+    },
+   );
+
+use constant TRACE => 1;
+
+=begin TML
+
+---++ StaticMethod CALDAV($session, $params, $topic, $web)
+
+Macro handler, indirected via CalDAVPlugin.pm
+
+Read CalDAV data from a remote server and generate output in a format
+suitable for use by different plugins.
+
+You can define an output format (using the 'target' parameter), or
+select from a range of predefined formats. 'header', 'footer' and
+'separator' have conventional interpretations, and all standard formatting
+tokens are supported.
+
+=cut
 
 sub CALDAV {
     my($session, $params, $topic, $web) = @_;
@@ -66,12 +64,16 @@ sub CALDAV {
 
     my $cal;
     eval {
-       $cal = Cal::DAV->new( user => $user, pass => $pass, url => $url);
+        $cal = Cal::DAV->new( user => $user, pass => $pass, url => $url);
     };
     unless ($cal) {
         print STDERR "Cal::DAV: $@\n";
         return "<span class='foswikiAlert'>Calendar could not be opened</span>";
     }
+
+    $params->{name} = $calendar unless defined $params->{name};
+    $params->{name} = $params->{url} unless defined $params->{name};
+    $params->{separator} = '$n()' unless defined $params->{separator};
 
     my $stop = $params->{stop};
     $stop = "50,365" unless defined($stop);
@@ -91,16 +93,18 @@ sub CALDAV {
                 $event{dtstart} = $p->{value};
                 $event{start} =
                   DateTime::Format::ICal->parse_datetime($p->value);
-                push(@events, "# dtstart ".$event{start});
+                push(@events, " dtstart ".$event{start}) if (TRACE);
             } elsif ($k eq 'dtend') {
                 $event{end} =
                   DateTime::Format::ICal->parse_datetime($p->value);
-                push(@events, "# dtend ".$event{end});
+                push(@events, " dtend ".$event{end}) if (TRACE);
             } elsif ($k eq 'summary') {
+                $event{summary} = $p->{value};
+                push(@events, " summary ".$event{summary}) if (TRACE);
+            } elsif ($k eq 'description') {
                 $event{description} = $p->{value};
-                $event{description} =~ s/\n/<br>/gs;
             } elsif ($k eq 'rrule') {
-                push(@events, "# rrule $p->{value}");
+                push(@events, " rrule $p->{value}") if (TRACE);
                 $event{recurrence} = $p->{value};
             }
         }
@@ -112,7 +116,8 @@ sub CALDAV {
             my $recur = DateTime::Format::ICal->parse_recurrence(
                 recurrence => $event{recurrence},
                 dtstart => $event{start});
-            # Limit to the request range *or* $stopDays *or* $stopCount repeats
+            # Limit to the request range *or* $stopDays *or*
+            # $stopCount repeats
             my $span = DateTime::Span->from_datetimes(
                 start => $event{start} ||
                   DateTime->from_epoch(epoch => time),
@@ -121,29 +126,74 @@ sub CALDAV {
             $event{count} ||= $stopCount;
             $event{count} = $stopCount if ($event{count} > $stopCount);
 
-            push(@events, "   * ".Foswiki::Time::formatTime(
-                Foswiki::Time::parseTime($event{start}))
-                   . ' - '.$event{description});
+            my $s = Foswiki::Time::parseTime($event{start});
+            push(@events,
+                 {
+                     start => $s,
+                     summary => $event{summary},
+                     description => $event{description},
+                 });
             $event{count}--;
             my $iter = $recur->iterator(span => $span);
             while ( $event{count} && (my $dt = $iter->next) ) {
-                push(@events, "   * " . Foswiki::Time::formatTime(
-                    Foswiki::Time::parseTime($dt))
-                   . ' - '.$event{description});
+                my $d = Foswiki::Time::parseTime($dt);
+                next if $d == $s;
+                push(@events,
+                     {
+                         start => $d,
+                         summary => $event{summary},
+                         description => $event{description},
+                     });
                 $event{count}--;
             }
         } else {
-            my $evs = Foswiki::Time::formatTime(
-                    Foswiki::Time::parseTime($event{start}));
-            if (defined $event{end}) {
-                $evs .= ' - '.Foswiki::Time::formatTime(
-                    Foswiki::Time::parseTime($event{end}));
-            }
-            $evs .= ' - '.$event{description};
-            push(@events, "   * $evs");
+            push(@events,
+                 {
+                     start => Foswiki::Time::parseTime($event{start}),
+                     end => (defined $event{end}) ?
+                       Foswiki::Time::parseTime($event{end}) : undef,
+                     summary => $event{summary},
+                     description => $event{description},
+                 });
         }
     }
-    return "\n".join("\n", @events)."\n";
+    return _formatEvents(\@events, $params);
+}
+
+sub _formatEvents {
+    my ($events, $params) = @_;
+
+    my $format;
+    my $target = $params->{target} || 'calendar';
+    if ($target) {
+        $format = $formats{$target} || $formats{calendar};
+    }
+    my $es = $params->{event};
+    $es = $format->{event} unless defined $es;
+    my $rs = $params->{range};
+    $rs = $format->{range} unless defined $rs;
+    my @r = map { _formatEvent($_, $params, $es, $rs) } @$events;
+    return Foswiki::Func::decodeFormatTokens(join($params->{separator}, @r));
+}
+
+sub _formatEvent {
+    my ($event, $params, $es, $rs) = @_;
+    return $event unless ref($event);
+    my $s = (defined $event->{end}) ? $rs : $es;
+    $s = Foswiki::Time::formatTime($event->{start}, $s);
+    if (defined $event->{end}) {
+        $s =~ s/\$e(seco?n?d?s?|minu?t?e?s?|hour?s?|day|w(eek|day)|dow
+                |mo(?:nt?h?)?|ye(?:ar)?)(\(\)|(?=\W|$))/\$$1/gx;
+        $s = Foswiki::Time::formatTime($event->{end}, $s);
+    }
+    foreach my $f (keys %$event) {
+        $s =~ s/\$$f(\(\)|(?=\W|$))/$event->{$f}/;
+    }
+    foreach my $f (keys %$params) {
+        next if $f =~ /^_/;
+        $s =~ s/\$$f(\(\)|(?=\W|$))/$params->{$f}/;
+    }
+    return $s;
 }
 
 1;
