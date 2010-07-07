@@ -18,7 +18,6 @@ sub check {
     my $data = <DATA>;
 
     $data = substr(lc('x').$data, 1);
-    die "WANK" unless Scalar::Util::tainted($data);
     eval {
         Data::ICal->new(data => $data);
     };
