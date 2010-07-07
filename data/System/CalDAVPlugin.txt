@@ -11,7 +11,7 @@ two of the most notable being Apple's iCal, and Google calendar.
 
 The plugin works by accessing a calendar on the !CalDAV server and
 generating an event list in the "bulleted event list" format that
-the !CalendarPlugin (and HolidaylistPlugin) can use.
+the !CalendarPlugin (and !HolidaylistPlugin) can use.
 
 Note that the !CalDAVPlugin will generate individual events for recurrences.
 The limits for the number of events generated for each recurrence can be
