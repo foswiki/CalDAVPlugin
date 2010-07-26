@@ -109,6 +109,7 @@ Many thanks to the following sponsors for supporting this work:
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  1.001 (26 Jul 2010) | Foswiki:Tasks/Item9392: Fix loading of configured calendars |
 |  1.000 (7 Jul 2010) | Initial release |
 |  Dependencies: | %$DEPENDENCIES% |
 |  Home page: | http://foswiki.org/bin/view/Extensions/CalDAVPlugin |

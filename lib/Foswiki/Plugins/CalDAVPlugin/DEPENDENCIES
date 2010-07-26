@@ -4,4 +4,3 @@
 # Foswiki::Plugins,>=1.2,perl,Requires version 1.2 of handler API.
 Cal::DAV,>=0,cpan,Required
 DateTime::Format::ICal,>=0,cpan,Required
-CalendarPlugin,>=2.000,perl,Optional, required to display calendars

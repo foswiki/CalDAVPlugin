@@ -13,7 +13,7 @@ use warnings;
 use Foswiki::Func    ();
 
 our $VERSION = '$Rev: 7888 $';
-our $RELEASE = '1.000';
+our $RELEASE = '1.001';
 our $SHORTDESCRIPTION = 'Extract a list of events from a !CalDAV (iCal) server';
 our $NO_PREFS_IN_TOPIC = 1;
 

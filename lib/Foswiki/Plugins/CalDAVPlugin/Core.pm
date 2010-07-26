@@ -41,20 +41,23 @@ sub CALDAV {
     my($session, $params, $topic, $web) = @_;
 
     my $calendar = $params->{_DEFAULT};
+    my $calspec;
     my $url;
     my $user;
     my $pass;
     if ($calendar) {
         # get from setup options
-        my $calspec = $Foswiki::cfg{Plugins}{CalDAVPlugin}{Calendars}->{$calendar};
+        $calspec = $Foswiki::cfg{Plugins}{CalDAVPlugin}{Calendars}->{$calendar};
         unless ($calspec) {
             return "<span class='foswikiAlert'>No such calendar '$calendar'</span>";
         }
     } else {
-        $url  = $params->{url};
-        $user = $params->{user};
-        $pass = $params->{pass};
+        $calspec = $params;
     }
+    $url  = $calspec->{url};
+    $user = $calspec->{user};
+    $pass = $calspec->{pass};
+
     unless ($url) {
         return "<span class='foswikiAlert'>No url given</span>";
     }
