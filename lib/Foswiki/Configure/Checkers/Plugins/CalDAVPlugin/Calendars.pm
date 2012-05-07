@@ -17,15 +17,14 @@ sub check {
     local $/ = undef;
     my $data = <DATA>;
 
-    $data = substr( lc('x') . $data, 1 );
-    eval { Data::ICal->new( data => $data ); };
+    $data = substr(lc('x').$data, 1);
+    eval {
+        Data::ICal->new(data => $data);
+    };
     if ($@) {
-        if ( $@ =~
-            /Insecure dependency in eval while running with -T switch at (\S+)/
-          )
-        {
+        if ($@ =~ /Insecure dependency in eval while running with -T switch at (\S+)/) {
             my $copy = $1;
-            my $e    = <<MESSAGE;
+            my $e = <<MESSAGE;
 <div>
 Data::ICal is broken. This problem has been reported to the CPAN
 maintainer, and awaits a fix. There may already be a new version
@@ -35,7 +34,7 @@ patch -p0 <<'HERE'
 --- $copy    2010-07-01 16:51:12.000000000 +0100
 +++ $copy    2010-07-01 17:01:55.000000000 +0100
 MESSAGE
-            $e .= <<'MESSAGE';
+        $e .= <<'MESSAGE';
 @@ -487,5 +487,6 @@
      die "Can't parse VALARM with action $action"
          unless exists $_action_map{$action};

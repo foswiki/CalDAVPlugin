@@ -10,27 +10,24 @@ package Foswiki::Plugins::CalDAVPlugin;
 use strict;
 use warnings;
 
-use Foswiki::Func ();
+use Foswiki::Func    ();
 
-our $VERSION          = '$Rev: 7888 $';
-our $RELEASE          = '1.001';
+our $VERSION = '$Rev: 7888 $';
+our $RELEASE = '1.001';
 our $SHORTDESCRIPTION = 'Extract a list of events from a !CalDAV (iCal) server';
 our $NO_PREFS_IN_TOPIC = 1;
 
 sub initPlugin {
-
     # my ( $topic, $web, $user, $installWeb ) = @_;
     Foswiki::Func::registerTagHandler( 'CALDAV', \&_CALDAV );
     return 1;
 }
 
 sub _CALDAV {
-
     # my($session, $params, $topic, $web) = @_;
 
     require Foswiki::Plugins::CalDAVPlugin::Core;
-
-    #    *_CALDAV = \&Foswiki::Plugins::CalDAVPlugin::Core::CALDAV;
+#    *_CALDAV = \&Foswiki::Plugins::CalDAVPlugin::Core::CALDAV;
     return Foswiki::Plugins::CalDAVPlugin::Core::CALDAV(@_);
 }
 
