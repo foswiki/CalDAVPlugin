@@ -20,7 +20,7 @@ my %formats = (
     },
 );
 
-use constant TRACE => 1;
+use constant TRACE => 0;
 
 =begin TML
 
